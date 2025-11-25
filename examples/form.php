@@ -1,30 +1,56 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" class="j5" xml:lang="de-de" lang="de-de" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <style>
+    .full-input {
+      display: inline-block;
+      padding: 3px;
+      border: 2px solid blue;
+      border-radius: 5px;
+    }
+    div.full-input > input {
+      outline: none;
+      border: none;
+      line-height: 1.2em;
+      font-size: 16px;
+      background-color: white;
+    }
+    div.full-input > label {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+      color: blue;
+    }
+  </style>
+</head>
+<body>
 <?php
-defined('_JEXEC') or die;
+require $_SERVER['DOCUMENT_ROOT'] . '/libraries/har64/Dwz.php';
 
-use har\MyDB;
-use har\Dwz;
+use har64\Dwz;
 
-MyDB::getWam()->useStyle('com_turniere.style');
-$headline = MyDB::getMenu()->title;
-echo "<h1>$headline <span style='font-size:20px'>(inoffiziell)</span></h1>\n";
+echo "<h1>DWZ evaluation <span style='font-size:20px'>(inoffiziell)</span></h1>\n";
 
 $year = date('Y') - 5;
 
 $erg = [];
-if (MyDB::issetInput('calc'))
+if (isset($_POST['calc']))
   $erg = dwz::getErg();
-$dwz = MyDB::getInput('dwz', 1600);
-$index = MyDB::getInput('index', 5);
-$gj = MyDB::getInput('gj', 1980);
-$punkte = MyDB::getInput('punkte', '0.0', 'FLOAT');
-$gegner = MyDB::getInput('gegner', [], 'ARRAY');
+$dwz = $_POST['dwz'] ?? 1600;
+$index = $_POST['index'] ?? 5;
+$gj = $_POST['gj'] ?? 1980;
+$punkte = $_POST['punkte'] ?? '0.0';
+$gegner = $_POST['gegner'] ?? [];
 $disabled = '';
 $erstDWZcheck = '';
-if (MyDB::getInput('erstDWZ')) {
+if (isset($_POST['erstDWZ'])) {
   $disabled = ' disabled';
   $erstDWZcheck = ' checked';
 }
-$erstDWZcheck = MyDB::getInput('erstDWZ') ? ' checked' : '';
+$erstDWZcheck = isset($_POST['erstDWZ']) ? ' checked' : '';
 echo <<<HTML
 <script type='text/javascript'>
 function chkGegner() {
@@ -34,7 +60,7 @@ function chkGegner() {
     if ($(this).val() != "") anz++;
   });
   if (anz < punkte) {
-    alert('Bitte mindestens soviele generische DWZ wie erzielte Punkte angeben.');
+    alert('Please enter at least as many generic DWZ as points scored.');
     return false;
   }
   return true;
@@ -122,3 +148,6 @@ if (!empty($erg)) {
 
 HTML;
 }
+?>
+</body>
+</html>
