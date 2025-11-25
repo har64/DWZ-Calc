@@ -1,17 +1,29 @@
 <?php
-namespace har;
 
 /**
- * Klasse dwz
+ * PHP version of DWZ calculation
+ *
+ * Tags: dwz php8
+ *
+ * @category Library
+ * @package  har64\Dwz
+ * @author   Harry Riegger <harry@riegger.info>
+ * @license  http://www.gnu.org/copyleft/gpl.html GNU General Public License
+ * @link     https://github.com/har64/DWZ-Calc
+ *
+ */
+
+namespace har64;
+
+/**
+ * Class dwz
  * 
  * berechnet die neue DWZ nach einem Turnier
  * 
- * Autor: Harry Riegger (harry@riegger.info)
- * Lizenz: http://www.gnu.org/copyleft/gpl.html GNU General Public License
- * Link: https://github.com/har64/DWZ-Calc
- * 
- * Version: 0.4
- * Änderungshistorie
+ * @category Library
+ * @package  har64\Dwz
+ * @author   Harry Riegger <harry@riegger.info>
+ * @license  http://www.gnu.org/copyleft/gpl.html GNU General Public License
  * 
  */
 class Dwz
@@ -33,7 +45,7 @@ class Dwz
   private static $diff = [];
 
   /**
-   * Konstruktor
+   * constructor
    * 
    * @param int $dwz          : bisherige DWZ
    * @param int $index        : DWZ-Index
