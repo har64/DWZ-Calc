@@ -32,13 +32,13 @@ require $_SERVER['DOCUMENT_ROOT'] . '/libraries/har64/Dwz.php';
 
 use har64\Dwz;
 
-echo "<h1>DWZ evaluation <span style='font-size:20px'>(inoffiziell)</span></h1>\n";
+echo "<h1>DWZ-Auswertung <span style='font-size:20px'>(inoffiziell)</span></h1>\n";
 
 $year = date('Y') - 5;
 
 $erg = [];
 if (isset($_POST['calc']))
-  $erg = dwz::getErg();
+  $erg = Dwz::getErg();
 $dwz = $_POST['dwz'] ?? 1600;
 $index = $_POST['index'] ?? 5;
 $gj = $_POST['gj'] ?? 1980;
@@ -60,7 +60,7 @@ function chkGegner() {
     if ($(this).val() != "") anz++;
   });
   if (anz < punkte) {
-    alert('Please enter at least as many generic DWZ as points scored.');
+    alert('Bitte mindestens soviele Gegner-DWZ wie Punkte angeben.');
     return false;
   }
   return true;
