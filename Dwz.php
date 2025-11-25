@@ -18,7 +18,7 @@ namespace har64;
 /**
  * Class dwz
  * 
- * berechnet die neue DWZ nach einem Turnier
+ * Unofficial calculation of German rating number (Deutsche Wertungs-Zahl = DWZ) according to the scoring regulations of German Chess Federation
  * 
  * @category Library
  * @package  har64\Dwz
@@ -28,30 +28,30 @@ namespace har64;
  */
 class Dwz
 {
-  private static int $dwz_alt;
-  private static int $dwz_index;
-  private static int $alters_faktor;
-  private static $dwz_gegner = [];
-  private static int $dwz_durchschnitt = 0;
-  private static int $anz_partien = 0;
-  private static float $punkte = 0.0;
-  private static float $erwartung = 0.0;
-  private static float $bremszuschlag = 0.0;
-  private static float $beschleuingungsfaktor = 1.0;
-  private static int $entwicklungskoeffizient;
-  private static int $dwz_neu = 0;
-  private static int $leistung = 0;
-  private static $erg = [];
-  private static $diff = [];
+  private static int $dwz_alt;                         # current DWZ
+  private static int $dwz_index;                       # current Index of DWZ
+  private static int $alters_faktor;                   # age fate: age <= 20: 5, 21 <= 25: 10, > 25: 15
+  private static $dwz_gegner = [];                     # array with DWZ of opponents
+  private static int $dwz_durchschnitt = 0;            # average of oppenent DWZ
+  private static int $anz_partien = 0;                 # number of games evaluated
+  private static float $punkte = 0.0;                  # points scored
+  private static float $erwartung = 0.0;               # profit expectation
+  private static float $bremszuschlag = 0.0;           # brake surcharge
+  private static float $beschleuingungsfaktor = 1.0;   # acceleration factor
+  private static int $entwicklungskoeffizient;         # development coefficient
+  private static int $dwz_neu = 0;                     # calculated DWZ
+  private static int $leistung = 0;                    # tournament performance
+  private static $erg = [];                            # results
+  private static $diff = [];                           # probability of a DWZ difference
 
   /**
    * constructor
    * 
-   * @param int $dwz          : bisherige DWZ
-   * @param int $index        : DWZ-Index
-   * @param int $geburtsjahr  : Geburtsjahr des Spielers
-   * @param array $dwz_gegner : DWZ der Gegner
-   * @param float $punkte     : erzielte Punkte
+   * @param int $dwz          : current DWZ
+   * @param int $index        : current Index of DWZ
+   * @param int $geburtsjahr  : year of birth of the player
+   * @param array $dwz_gegner : DWZ of opponents
+   * @param float $punkte     : points scored
    */
   public function __construct($dwz = 0, $index = 0, $geburtsjahr = 0, $dwz_gegner = [], $punkte = 0)
   {
@@ -60,7 +60,10 @@ class Dwz
   }
 
   /**
-   * Summary of initVars
+   * static method initVars
+   *
+   * Initialization of variables
+   *
    * @param int $dwz
    * @param int $index
    * @param int $geburtsjahr
@@ -86,9 +89,16 @@ class Dwz
   }
 
   /**
-   * statische Methode setParams
+   * static method setParams
    * 
-   * füllt alle notwendigen Variablen
+   * Initialization of variables by POST or GET
+   *
+   * Parameters
+   * 'dwz'     : current DWZ
+   * 'index'   : current index of DWZ
+   * 'gj'      : year of birth of the player
+   * 'punkte'  : points scored
+   * 'gegner'  : array or semicolon separated list of DWZ of the opponents
    * 
    * @return void
    */
@@ -136,9 +146,9 @@ class Dwz
   }
 
   /**
-   * private statische Methode calcDWZ
+   * private static methode calcDWZ
    * 
-   * berechnet die neue DWZ
+   * calls all methods to calculate new DWZ
    * 
    * @return void
    */
@@ -153,11 +163,11 @@ class Dwz
   }
 
   /**
-   * private statische Methode probability
+   * private static method probability
    * 
-   * berechnet die erwartete Punktzahl bei einer DWZ-Differenz
+   * calculates the expected score for a DWZ difference
    * 
-   * @param mixed $dwz_diff
+   * @param int $dwz_diff : DWZ difference
    * @return float|int
    */
   private static function probability($dwz_diff)
@@ -180,9 +190,9 @@ class Dwz
   }
 
   /**
-   * private statische Methode calcDiff
+   * private static method calcDiff
    * 
-   * berechnet die DWZ-Differenz bei einer Wahrscheinlichkeit
+   * calculates the DWZ difference given a probability
    * 
    * @return void
    */
@@ -197,9 +207,9 @@ class Dwz
   }
 
   /**
-   * private statische Methode calcErwartung
+   * private static method calcErwartung
    * 
-   * berechnet die Gewinnerwartung
+   * calculates the profit expectation
    * 
    * @return void
    */
@@ -217,9 +227,9 @@ class Dwz
   }
 
   /**
-   * private statische Methodde calcBremszuschlag
+   * private static method calcBremszuschlag
    * 
-   * berechnet den Bremszuschlag bei DWZ < 1300
+   * calculates the brake surcharge at DWZ < 1300
    * 
    * @return void
    */
@@ -230,9 +240,9 @@ class Dwz
   }
 
   /**
-   * statische Methode calcBeschleunigung
+   * private static method calcBeschleunigung
    * 
-   * berechnet den Beschleunigungs-Faktor für Jugendliche bis 20 Jahre
+   * calculates the acceleration factor for young people up to 20 years of age
    * 
    * @return void
    */
@@ -245,9 +255,9 @@ class Dwz
   }
 
   /**
-   * private statische Methode of calcEntwK
+   * private static method of calcEntwK
    * 
-   * berechnet den Entwicklungskoeffizienten
+   * calculates the development coefficient
    * 
    * @return void
    */
@@ -266,9 +276,9 @@ class Dwz
   }
 
   /**
-   * statische Methode calcNewDWZ
+   * private static method calcNewDWZ
    * 
-   * berechnet die neue DWZ
+   * calculates the new DWZ
    * 
    * @return void
    */
@@ -284,12 +294,12 @@ class Dwz
   }
 
   /**
-   * private statische Methode getDiff
+   * private static method getDiff
    * 
-   * gibt die DWZ-Differenz bei einer Wahrscheinlichkeit zurück
+   * returns the DWZ difference at a probability
    * 
-   * @param float $p
-   * @return integer
+   * @param float $p : probability
+   * @return integer : DWZ difference
    */
   private static function getDiff($p)
   {
@@ -299,9 +309,9 @@ class Dwz
   }
 
   /**
-   * private statische Methode calcLeistung
+   * privat static method calcLeistung
    * 
-   * berechnet die Leistung im Turnier
+   * calculates the performance in the tournament (at least 5 games)
    * 
    * @return void
    */
@@ -329,9 +339,9 @@ class Dwz
   }
 
   /**
-   * private statische Methode fillErg
+   * private static Methode fillErg
    * 
-   * befüllt das Ergebnis-Array
+   * fills the result array
    * 
    * @return void
    */
@@ -353,11 +363,11 @@ class Dwz
   }
 
   /**
-   * statische Methode getErg
+   * static method getErg
    * 
-   * gibt das Ergebnis zurück
+   * returns the result
    * 
-   * @return array{DWZ_alt: int, DWZ_neu: int, Erwartung: float, Koeffizient: int, Partien: int}
+   * @return array {DWZ_alt: int, DWZ_neu: int, Erwartung: float, Koeffizient: int, Partien: int}
    */
   public static function getErg()
   {
@@ -367,9 +377,9 @@ class Dwz
   }
 
   /**
-   * statische Methode showErg
+   * static method showErg
    * 
-   * gibt das Ergebnis in JSON aus
+   * outputs the result in JSON e.g. for AJAX Query
    * 
    * @return void
    */
