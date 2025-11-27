@@ -53,7 +53,7 @@ class Dwz
    * @param array $dwz_gegner : DWZ of opponents
    * @param float $punkte     : points scored
    */
-  public function __construct($dwz = 0, $index = 0, $geburtsjahr = 0, $dwz_gegner = [], $punkte = 0)
+  public function __construct($dwz = 0, $index = 6, $geburtsjahr = 0, $dwz_gegner = [], $punkte = 0)
   {
     if (!empty($dwz_gegner))
       self::initVars($dwz, $index, $geburtsjahr, $dwz_gegner, $punkte);
@@ -71,7 +71,7 @@ class Dwz
    * @param int $punkte
    * @return void
    */
-  public static function initVars($dwz = 0, $index = 0, $geburtsjahr = 0, $dwz_gegner = [], $punkte = 0)
+  public static function initVars($dwz = 0, $index = 6, $geburtsjahr = 0, $dwz_gegner = [], $punkte = 0)
   {
     self::$dwz_alt = $dwz;
     self::$dwz_neu = 0;
@@ -112,7 +112,7 @@ class Dwz
         self::$dwz_index = intval($dwz[1]);
       } else {
         self::$dwz_alt = intval($dwz_alt);
-        self::$dwz_index = $_POST['index'] ?? $GET['index'] ?? 0;
+        self::$dwz_index = $_POST['index'] ?? $GET['index'] ?? 6;
       }
     }
     if (!isset(self::$alters_faktor)) {
