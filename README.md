@@ -2,7 +2,7 @@
 Unofficial calculation of German rating number (Deutsche Wertungs-Zahl = DWZ) according to the scoring regulations of German Chess Federation
 
 ## Requirements
-* PHP 8.3.28 or newer
+* PHP 8.3 or newer
 
 ## Installing
 Put Dwz.php on your webspace e.g.  $_SERVER['DOCUMENT_ROOT'] . /libraries/har64/
