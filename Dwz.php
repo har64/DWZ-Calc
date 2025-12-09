@@ -163,6 +163,20 @@ class Dwz
   }
 
   /**
+   * private statische Methode fak
+   * 
+   * brechnet die Fakultät einer Zahl
+   * 
+   * @param int $n
+   * @return int
+   */
+  private static function fak($n)
+  {
+    $fak = ($n == 0) ? 1 : $n * self::fak($n - 1);
+    return $fak;
+  }
+
+  /**
    * private static method probability
    * 
    * calculates the expected score for a DWZ difference
@@ -172,21 +186,22 @@ class Dwz
    */
   private static function probability($dwz_diff)
   {
-    $result = 0;
-    $stddev = sqrt(80000);
-    $dwz_diff /= $stddev;
+    $z = $dwz_diff / (200 * sqrt(2));
     $approx_depth = 256;
+    // Berechnung der Summe
+    $s = 0;
     for ($i = 0, $k = 1; $i < $approx_depth; $i++) {
-      $n = $i * 2 + 1;
-      $k *= $n;
-      $p = pow($dwz_diff, $n) / $k;
-      if (is_nan($p) || is_infinite($p))
+      $e = 2 * $i + 1;
+      $n = pow(-1, $i) * pow($z, $e);
+      $d = self::fak($i) * pow(2, $i) * $e;
+      $p = $n / $d;
+      if (abs($p) < PHP_FLOAT_EPSILON || is_nan($p) || is_infinite($p))
         break;
-      $result += $p;
+      $s += $p;
     }
-    $result *= 1 / sqrt(2 * pi()) * exp(-pow($dwz_diff, 2) / 2);
-    $result += 0.5;
-    return max(0, $result);
+    // Berechnung des Ergebnisses
+    $result = 1 / sqrt(2 * pi()) * $s;
+    return $result + 0.5;
   }
 
   /**
