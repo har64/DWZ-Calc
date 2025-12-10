@@ -146,7 +146,7 @@ class Dwz
   }
 
   /**
-   * private static methode calcDWZ
+   * private static method calcDWZ
    * 
    * calls all methods to calculate new DWZ
    * 
@@ -163,9 +163,9 @@ class Dwz
   }
 
   /**
-   * private statische Methode fak
+   * private static method fak
    * 
-   * brechnet die Fakultät einer Zahl
+   * calculates recursive the faculty of an integer
    * 
    * @param int $n
    * @return int
@@ -188,18 +188,19 @@ class Dwz
   {
     $z = $dwz_diff / (200 * sqrt(2));
     $approx_depth = 256;
-    // Berechnung der Summe
+    // Calcultaion of sum
     $s = 0;
     for ($i = 0, $k = 1; $i < $approx_depth; $i++) {
       $e = 2 * $i + 1;
       $n = pow(-1, $i) * pow($z, $e);
       $d = self::fak($i) * pow(2, $i) * $e;
       $p = $n / $d;
+      // Break, if accuracy of PHP is reached
       if (abs($p) < PHP_FLOAT_EPSILON || is_nan($p) || is_infinite($p))
         break;
       $s += $p;
     }
-    // Berechnung des Ergebnisses
+    // Calculation and return of result
     $result = 1 / sqrt(2 * pi()) * $s;
     return $result + 0.5;
   }
