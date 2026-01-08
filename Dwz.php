@@ -342,15 +342,16 @@ class Dwz
         if (empty(self::$diff))
           self::calcDiff();
         $p = round(self::$punkte / self::$anz_partien, 3);
-        self::$leistung = self::$dwz_durchschnitt + self::getDiff($p);
-        do {
+        $diff = self::getDiff($p);
+        self::$leistung = self::$dwz_durchschnitt + $diff;
+        while ($diff) {
           $erwartung = 0;
           foreach (self::$dwz_gegner as $gegner)
             $erwartung += self::probability(self::$leistung - $gegner);
           $p = round(0.5 + (self::$punkte - $erwartung) / self::$anz_partien, 3);
           $diff = self::getDiff($p);
           self::$leistung += $diff;
-        } while ($diff);
+        };
       }
   }
 
