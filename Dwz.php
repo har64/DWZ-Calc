@@ -78,7 +78,7 @@ class Dwz
     self::$dwz_index = $index;
     $alter = $geburtsjahr ? date('Y') - $geburtsjahr : $geburtsjahr;
     self::$alters_faktor = $alter == 0 ? 15 : ($alter <= 20 ? 5 : ($alter <= 25 ? 10 : 15));
-    self::$dwz_gegner = $dwz_gegner;
+    self::$dwz_gegner = array_filter($dwz_gegner);
     self::$punkte = $punkte;
     self::$erwartung = 0;
     self::$erg = [];
@@ -130,11 +130,9 @@ class Dwz
     }
     if (empty(self::$dwz_gegner)) {
       $gegner = $_POST['gegner'] ?? 0;
-      if (is_array($gegner)) {
-        foreach ($gegner as $opp)
-          if ($opp)
-            self::$dwz_gegner[] = $opp;
-      } else {
+      if (is_array($gegner))
+        self::$dwz_gegner[] = array_filter($gegner);
+      else {
         $gegner = $_POST['gegner'] ?? $_GET['gegner'] ?? 0;
         $dwz_opps = explode(';', $gegner);
         foreach ($dwz_opps as $opp)
