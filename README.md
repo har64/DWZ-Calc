@@ -67,7 +67,7 @@ The following input-fields are required
   <td>gegner</td>
   <td>DWZ of opponents</td>
   <td>array of integer or <br>semicolon separated list</td>
-  <td></td>
+  <td>DWZ values equal to 0 are deleted</td>
 </tr>
 </table>
 
