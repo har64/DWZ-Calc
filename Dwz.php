@@ -131,7 +131,7 @@ class Dwz
     if (empty(self::$dwz_gegner)) {
       $gegner = $_POST['gegner'] ?? 0;
       if (is_array($gegner))
-        self::$dwz_gegner[] = array_filter($gegner);
+        self::$dwz_gegner = array_filter($gegner);
       else {
         $gegner = $_POST['gegner'] ?? $_GET['gegner'] ?? 0;
         $dwz_opps = explode(';', $gegner);
@@ -347,7 +347,11 @@ class Dwz
           foreach (self::$dwz_gegner as $gegner)
             $erwartung += self::probability(self::$leistung - $gegner);
           $p = round(0.5 + (self::$punkte - $erwartung) / self::$anz_partien, 3);
-          $diff = self::getDiff($p);
+          $ndiff = self::getDiff($p);
+          if ($ndiff + $diff == 0)
+            break;
+          else
+            $diff = $ndiff;
           self::$leistung += $diff;
         };
       }
