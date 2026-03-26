@@ -332,29 +332,32 @@ class Dwz
   private static function calcLeistung()
   {
     if (self::$anz_partien >= 5)
-      if (self::$punkte == self::$anz_partien)
-        self::$leistung = self::$dwz_durchschnitt + 677;
-      elseif (self::$punkte == 0)
-        self::$leistung = self::$dwz_durchschnitt - 677;
-      else {
-        if (empty(self::$diff))
-          self::calcDiff();
-        $p = round(self::$punkte / self::$anz_partien, 3);
-        $diff = self::getDiff($p);
-        self::$leistung = self::$dwz_durchschnitt + $diff;
-        while ($diff) {
-          $erwartung = 0;
-          foreach (self::$dwz_gegner as $gegner)
-            $erwartung += self::probability(self::$leistung - $gegner);
-          $p = round(0.5 + (self::$punkte - $erwartung) / self::$anz_partien, 3);
-          $ndiff = self::getDiff($p);
-          if ($ndiff + $diff == 0)
-            break;
-          else
-            $diff = $ndiff;
-          self::$leistung += $diff;
-        };
+      if (self::$dwz_alt == 0 && (self::$punkte == self::$anz_partien || self::$punkte == 0))
+        return;
+    if (self::$punkte == self::$anz_partien)
+      self::$leistung = self::$dwz_durchschnitt + 677;
+    elseif (self::$punkte == 0)
+      self::$leistung = self::$dwz_durchschnitt - 677;
+    else {
+      if (empty(self::$diff))
+        self::calcDiff();
+      $p = round(self::$punkte / self::$anz_partien, 3);
+      $diff = self::getDiff($p);
+      self::$leistung = self::$dwz_durchschnitt + $diff;
+      while ($diff) {
+        $erwartung = 0;
+        foreach (self::$dwz_gegner as $gegner)
+          $erwartung += self::probability(self::$leistung - $gegner);
+        $p = round(0.5 + (self::$punkte - $erwartung) / self::$anz_partien, 3);
+        $ndiff = self::getDiff($p);
+        if ($ndiff + $diff == 0)
+          break;
+        else
+          $diff = $ndiff;
+        self::$leistung += $diff;
       }
+      ;
+    }
   }
 
   /**
