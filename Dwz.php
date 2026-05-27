@@ -356,7 +356,6 @@ class Dwz
           $diff = $ndiff;
         self::$leistung += $diff;
       }
-      ;
     }
   }
 
