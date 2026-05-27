@@ -264,7 +264,7 @@ class Dwz
   {
     if (self::$alters_faktor == 5 && self::$punkte >= self::$erwartung) {
       $a = self::$dwz_alt / 2000;
-      self::$beschleuingungsfaktor = $a >= 0.5 && $a < 1.0 ? $a : 1.0;
+      self::$beschleuingungsfaktor = $a < 0.5 ? 0.5 : ($a > 1.0 ? 1.0 : $a);
     }
   }
 
