@@ -1,5 +1,5 @@
 # DWZ Calculation
-Unofficial calculation of German rating number (Deutsche Wertungs-Zahl = DWZ) according to the [scoring regulations](https://www.schachbund.de/wertungsordnung.html) from 2026-08-08 of German Chess Federation
+Unofficial calculation of German rating number (Deutsche Wertungs-Zahl = DWZ) according to the [scoring regulations](https://www.schachbund.de/wertungsordnung.html) from 2026-06-08 of German Chess Federation
 
 ## Requirements
 * PHP 8.3 or newer
