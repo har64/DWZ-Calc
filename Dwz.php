@@ -1,57 +1,56 @@
 <?php
+namespace har;
 
 /**
- * PHP version of DWZ calculation
- *
- * Tags: dwz php8
- *
- * @category Library
- * @package  har64\Dwz
- * @author   Harry Riegger <harry@riegger.info>
- * @license  http://www.gnu.org/copyleft/gpl.html GNU General Public License
- * @link     https://github.com/har64/DWZ-Calc
- *
- */
-
-namespace har64;
-
-/**
- * Class dwz
+ * Klasse dwz
  * 
- * Unofficial calculation of German rating number (Deutsche Wertungs-Zahl = DWZ) according to the scoring regulations of German Chess Federation
+ * berechnet die neue DWZ nach einem Turnier
  * 
- * @category Library
- * @package  har64\Dwz
- * @author   Harry Riegger <harry@riegger.info>
- * @license  http://www.gnu.org/copyleft/gpl.html GNU General Public License
+ * Autor: Harry Riegger (harry@riegger.info)
+ * Lizenz: http://www.gnu.org/copyleft/gpl.html GNU General Public License
+ * Link: https://github.com/har64/DWZ-Calc
  * 
+ * Version: 0.7
+ * Änderungshistorie
+ * 08.01.26 Korrektur calcLeistung
+ * 04.02.26 Fehlerkorrekturen
+ * 03.03.26 keine Leistung, wenn DWZ = 0 und Extremresultate
+ * 01.08.26 neue Wertungsordnung 
  */
 class Dwz
 {
-  private static int $dwz_alt;                         # current DWZ
-  private static int $dwz_index;                       # current Index of DWZ
-  private static int $alters_faktor;                   # age fate: age <= 20: 5, 21 <= 25: 10, > 25: 15
-  private static $dwz_gegner = [];                     # array with DWZ of opponents
-  private static int $dwz_durchschnitt = 0;            # average of oppenent DWZ
-  private static int $anz_partien = 0;                 # number of games evaluated
-  private static float $punkte = 0.0;                  # points scored
-  private static float $erwartung = 0.0;               # profit expectation
-  private static float $bremszuschlag = 0.0;           # brake surcharge
-  private static float $beschleuingungsfaktor = 1.0;   # acceleration factor
-  private static int $entwicklungskoeffizient;         # development coefficient
-  private static int $dwz_neu = 0;                     # calculated DWZ
-  private static int $leistung = 0;                    # tournament performance
-  private static $erg = [];                            # results
-  private static $diff = [];                           # probability of a DWZ difference
+  private static int $dwz_alt;
+  private static int $dwz_index;
+  private static int $alter;
+  private static $dwz_gegner = [];
+  private static int $dwz_durchschnitt = 0;
+  private static int $anz_partien = 0;
+  private static float $punkte = 0.0;
+  private static float $erwartung = 0.0;
+  private static float $bremsfaktor = 1.0;
+  private static float $erfolgsaufschlag = 0.0;
+  private static float $entwicklungsfaktor;
+  private static int $dwz_neu = 0;
+  private static int $leistung = 0;
+  private static $erg = [];
+  private static $diff = [];
+  private const contVars = [
+    'r' => 0.08,    # Korrektur-Faktor bei Erst DWZ
+    't' => 30,      # Divisor bei Jugendaufschlag a
+    'u' => 800,     # Verschiebung beim Bremsfaktor b
+    'a1' => 4.0,    # Erfolgsaufschlag Junioren
+    'a2' => 4.0,    # Erfolgsaufschlag Erwachsene
+    'Kmax' => 80    # Höchstwert des K-Faktors
+  ];
 
   /**
-   * constructor
+   * Konstruktor
    * 
-   * @param int $dwz          : current DWZ
-   * @param int $index        : current Index of DWZ
-   * @param int $geburtsjahr  : year of birth of the player
-   * @param array $dwz_gegner : DWZ of opponents
-   * @param float $punkte     : points scored
+   * @param int $dwz          : bisherige DWZ
+   * @param int $index        : DWZ-Index
+   * @param int $geburtsjahr  : Geburtsjahr des Spielers
+   * @param array $dwz_gegner : DWZ der Gegner
+   * @param float $punkte     : erzielte Punkte
    */
   public function __construct($dwz = 0, $index = 6, $geburtsjahr = 0, $dwz_gegner = [], $punkte = 0)
   {
@@ -60,10 +59,7 @@ class Dwz
   }
 
   /**
-   * static method initVars
-   *
-   * Initialization of variables
-   *
+   * Summary of initVars
    * @param int $dwz
    * @param int $index
    * @param int $geburtsjahr
@@ -76,29 +72,19 @@ class Dwz
     self::$dwz_alt = $dwz;
     self::$dwz_neu = 0;
     self::$dwz_index = $index;
-    $alter = $geburtsjahr ? date('Y') - $geburtsjahr : $geburtsjahr;
-    self::$alters_faktor = $alter == 0 ? 15 : ($alter <= 20 ? 5 : ($alter <= 25 ? 10 : 15));
+    self::$alter = $geburtsjahr ? date('Y') - $geburtsjahr : 26;
     self::$dwz_gegner = array_filter($dwz_gegner);
     self::$punkte = $punkte;
     self::$erwartung = 0;
     self::$erg = [];
-    self::$beschleuingungsfaktor = 1.0;
-    self::$bremszuschlag = 0;
     self::$leistung = 0;
     self::calcDWZ();
   }
 
   /**
-   * static method setParams
+   * statische Methode setParams
    * 
-   * Initialization of variables by POST or GET
-   *
-   * Parameters
-   * 'dwz'     : current DWZ
-   * 'index'   : current index of DWZ
-   * 'gj'      : year of birth of the player
-   * 'punkte'  : points scored
-   * 'gegner'  : array or semicolon separated list of DWZ of the opponents
+   * füllt alle notwendigen Variablen
    * 
    * @return void
    */
@@ -115,10 +101,9 @@ class Dwz
         self::$dwz_index = $_POST['index'] ?? $GET['index'] ?? 6;
       }
     }
-    if (!isset(self::$alters_faktor)) {
+    if (!isset(self::$alter)) {
       $geburtsjahr = $_POST['gj'] ?? $_GET['gj'] ?? 0;
-      $alter = $geburtsjahr ? date('Y') - $geburtsjahr : $geburtsjahr;
-      self::$alters_faktor = $alter == 0 ? 15 : ($alter <= 20 ? 5 : ($alter <= 25 ? 10 : 15));
+      self::$alter = $geburtsjahr ? date('Y') - $geburtsjahr : 26;
     }
     if (!self::$punkte) {
       $punkte = $_POST['punkte'] ?? 0;
@@ -144,26 +129,26 @@ class Dwz
   }
 
   /**
-   * private static method calcDWZ
+   * private statische Methode calcDWZ
    * 
-   * calls all methods to calculate new DWZ
+   * berechnet die neue DWZ
    * 
    * @return void
    */
   private static function calcDWZ()
   {
     self::calcErwartung();
-    self::calcBremszuschlag();
-    self::calcBeschleunigung();
-    self::calcEntwK();
+    self::calcBremsfaktor();
+    self::calcErfolgsaufschlag();
+    self::calcEntwFaktor();
     self::calcLeistung();
     self::calcNewDWZ();
   }
 
   /**
-   * private static method fak
+   * private statische Methode fak
    * 
-   * calculates recursive the faculty of an integer
+   * brechnet die Fakultät einer Zahl
    * 
    * @param int $n
    * @return int
@@ -175,38 +160,37 @@ class Dwz
   }
 
   /**
-   * private static method probability
+   * private statische Methode probability
    * 
-   * calculates the expected score for a DWZ difference
+   * berechnet die erwartete Punktzahl bei einer DWZ-Differenz
    * 
-   * @param int $dwz_diff : DWZ difference
+   * @param mixed $dwz_diff
    * @return float|int
    */
   private static function probability($dwz_diff)
   {
     $z = $dwz_diff / (200 * sqrt(2));
     $approx_depth = 256;
-    // Calcultaion of sum
+    // Berechnung der Summe
     $s = 0;
-    for ($i = 0, $k = 1; $i < $approx_depth; $i++) {
+    for ($i = 0; $i < $approx_depth; $i++) {
       $e = 2 * $i + 1;
       $n = pow(-1, $i) * pow($z, $e);
       $d = self::fak($i) * pow(2, $i) * $e;
       $p = $n / $d;
-      // Break, if accuracy of PHP is reached
       if (abs($p) < PHP_FLOAT_EPSILON || is_nan($p) || is_infinite($p))
         break;
       $s += $p;
     }
-    // Calculation and return of result
+    // Berechnung des Ergebnisses
     $result = 1 / sqrt(2 * pi()) * $s;
     return $result + 0.5;
   }
 
   /**
-   * private static method calcDiff
+   * private statische Methode calcDiff
    * 
-   * calculates the DWZ difference given a probability
+   * berechnet die DWZ-Differenz bei einer Wahrscheinlichkeit
    * 
    * @return void
    */
@@ -221,9 +205,9 @@ class Dwz
   }
 
   /**
-   * private static method calcErwartung
+   * private statische Methode calcErwartung
    * 
-   * calculates the profit expectation
+   * berechnet die Gewinnerwartung
    * 
    * @return void
    */
@@ -241,79 +225,91 @@ class Dwz
   }
 
   /**
-   * private static method calcBremszuschlag
+   * private statische Methode calcBremsfaktor
    * 
-   * calculates the brake surcharge at DWZ < 1300
+   * berechnet den Bremszuschlag bei DWZ < 1600
    * 
    * @return void
    */
-  private static function calcBremszuschlag()
+  private static function calcBremsfaktor()
   {
-    if (self::$dwz_alt < 1300 && self::$punkte < self::$erwartung)
-      self::$bremszuschlag = exp((1300 - self::$dwz_alt) / 150) - 1;
+    if (self::$dwz_alt < 1600 && self::$punkte < self::$erwartung)
+      self::$bremsfaktor = (self::$dwz_alt + self::contVars['u']) / (1600 + self::contVars['u']);
   }
 
   /**
-   * private static method calcBeschleunigung
+   * statische Methode calcErfolgsaufschlag
    * 
-   * calculates the acceleration factor for young people up to 20 years of age
+   * berechnet den Erfolgsaufschlag
    * 
    * @return void
    */
-  private static function calcBeschleunigung()
+  private static function calcErfolgsaufschlag()
   {
-    if (self::$alters_faktor == 5 && self::$punkte >= self::$erwartung) {
-      $a = self::$dwz_alt / 2000;
-      self::$beschleuingungsfaktor = $a < 0.5 ? 0.5 : ($a > 1.0 ? 1.0 : $a);
+    if (self::$punkte >= self::$erwartung) {
+      if (self::$alter < 21) {
+        if (self::$dwz_alt < 2000)
+          self::$erfolgsaufschlag = (2000 - self::$dwz_alt) / self::contVars['t'];
+      } elseif (self::$dwz_alt < 1600)
+        self::$erfolgsaufschlag = self::$alter < 26 ? self::contVars['a1'] : self::contVars['a2'];
     }
   }
 
   /**
-   * private static method of calcEntwK
+   * private statische Methode of calcEntwFaktor
    * 
-   * calculates the development coefficient
+   * berechnet den Entwicklungsfaktor K
    * 
    * @return void
    */
-  private static function calcEntwK()
+  private static function calcEntwFaktor()
   {
-    $grundwert = pow(self::$dwz_alt / 1000, 4) + self::$alters_faktor;
-    $e = self::$beschleuingungsfaktor * $grundwert + self::$bremszuschlag;
-    if ($e < 5.0)
-      $e = 5.0;
-    if (self::$bremszuschlag == 0) {
-      $max = self::$dwz_index < 6 ? self::$dwz_index * 5.0 : 30.0;
-      $e = $e > $max ? $max : $e;
-    } elseif ($e > 150)
-      $e = 150;
-    self::$entwicklungskoeffizient = intval(round($e));
+    $k0 = [[0, 0, 0], [60, 60, 60], [60, 60, 60], [48, 44, 41], [46, 42, 39], [44, 40, 37], [42, 38, 35], [40, 36, 33], [38, 34, 31], [36, 32, 29], [34, 30, 27], [32, 28, 25]];
+    $i = 2;
+    if (self::$alter < 26 && self::$dwz_alt < 2200)
+      $i = 0;
+    elseif (self::$alter > 25 && self::$dwz_alt < 2000)
+      $i = 1;
+    $col = array_column($k0, $i);
+    $grundwert = self::$dwz_index > 10 ? $col[11] : $col[self::$dwz_index];
+    $ef = round($grundwert * self::$bremsfaktor + self::$erfolgsaufschlag, 1);
+    if ($ef > self::contVars['Kmax'])
+      $ef = self::contVars['Kmax'];
+    self::$entwicklungsfaktor = $ef;
   }
 
   /**
-   * private static method calcNewDWZ
+   * statische Methode calcNewDWZ
    * 
-   * calculates the new DWZ
+   * berechnet die neue DWZ
    * 
    * @return void
    */
   private static function calcNewDWZ()
   {
+    // Erst-DWZ
     if (self::$dwz_alt == 0) {
-      if (self::$leistung)
-        self::$dwz_neu = self::$leistung < 800 ? intval(self::$leistung / 8 + 700) : self::$leistung;
+      if (self::$leistung) {
+        if (self::$leistung >= 2000)
+          self::$dwz_neu = self::$leistung;
+        elseif (self::$leistung >= 1100)
+          self::$dwz_neu = self::$leistung + self::contVars['r'] * (2000 - self::$leistung);
+        else
+          self::$dwz_neu = 1100 + 9 * self::contVars['r'] * self::$leistung / 11;
+      }
     } else
-      self::$dwz_neu = intval(round(
-        self::$dwz_alt + 800 * (self::$punkte - self::$erwartung) / (self::$entwicklungskoeffizient + self::$anz_partien)
-      ));
+      self::$dwz_neu = intval(round(self::$dwz_alt + self::$entwicklungsfaktor * (self::$punkte - self::$erwartung)));
+    if (self::$dwz_neu < 1100)
+      self::$dwz_neu = 1100;
   }
 
   /**
-   * private static method getDiff
+   * private statische Methode getDiff
    * 
-   * returns the DWZ difference at a probability
+   * gibt die DWZ-Differenz bei einer Wahrscheinlichkeit zurück
    * 
-   * @param float $p : probability
-   * @return integer : DWZ difference
+   * @param float $p
+   * @return integer
    */
   private static function getDiff($p)
   {
@@ -323,46 +319,51 @@ class Dwz
   }
 
   /**
-   * privat static method calcLeistung
+   * private statische Methode calcLeistung
    * 
-   * calculates the performance in the tournament (at least 5 games)
+   * berechnet die Leistung im Turnier
    * 
    * @return void
    */
   private static function calcLeistung()
   {
-    if (self::$anz_partien >= 5)
-      if (self::$dwz_alt == 0 && (self::$punkte == self::$anz_partien || self::$punkte == 0))
-        return;
-    if (self::$punkte == self::$anz_partien)
-      self::$leistung = self::$dwz_durchschnitt + 677;
-    elseif (self::$punkte == 0)
-      self::$leistung = self::$dwz_durchschnitt - 677;
-    else {
-      if (empty(self::$diff))
-        self::calcDiff();
-      $p = round(self::$punkte / self::$anz_partien, 3);
-      $diff = self::getDiff($p);
-      self::$leistung = self::$dwz_durchschnitt + $diff;
-      while ($diff) {
-        $erwartung = 0;
-        foreach (self::$dwz_gegner as $gegner)
-          $erwartung += self::probability(self::$leistung - $gegner);
-        $p = round(0.5 + (self::$punkte - $erwartung) / self::$anz_partien, 3);
-        $ndiff = self::getDiff($p);
-        if ($ndiff + $diff == 0)
-          break;
-        else
-          $diff = $ndiff;
-        self::$leistung += $diff;
+    if (self::$anz_partien >= 5) {
+      if (self::$dwz_alt == 0)
+        // bei 100% hinzufügen fiktives Remis nach 3.6.2
+        if (self::$punkte == self::$anz_partien) {
+          self::$punkte += 0.5;
+          self::$anz_partien++;
+          self::$dwz_gegner[] = self::$dwz_durchschnitt;
+        } elseif (self::$punkte == 0)
+          return;
+      if (self::$punkte == 0)
+        self::$leistung = 0;
+      else {
+        if (empty(self::$diff))
+          self::calcDiff();
+        $p = round(self::$punkte / self::$anz_partien, 3);
+        $diff = self::getDiff($p);
+        self::$leistung = self::$dwz_durchschnitt + $diff;
+        while ($diff) {
+          $erwartung = 0;
+          foreach (self::$dwz_gegner as $gegner)
+            $erwartung += self::probability(self::$leistung - $gegner);
+          $p = round(0.5 + (self::$punkte - $erwartung) / self::$anz_partien, 3);
+          $ndiff = self::getDiff($p);
+          if ($ndiff + $diff == 0)
+            break;
+          else
+            $diff = $ndiff;
+          self::$leistung += $diff;
+        }
       }
     }
   }
 
   /**
-   * private static Methode fillErg
+   * private statische Methode fillErg
    * 
-   * fills the result array
+   * befüllt das Ergebnis-Array
    * 
    * @return void
    */
@@ -375,18 +376,18 @@ class Dwz
       'DWZ_neu' => self::$dwz_neu,
       'Erwartung' => round(self::$erwartung, 3),
       'Partien' => self::$anz_partien,
-      'Koeffizient' => self::$entwicklungskoeffizient,
-      'Beschleunigung' => self::$beschleuingungsfaktor,
-      'Bremszuschlag' => self::$bremszuschlag,
+      'Entwicklungsfaktor' => self::$entwicklungsfaktor,
+      'Erfolgsaufschlag' => self::$erfolgsaufschlag,
+      'Bremsfaktor' => self::$bremsfaktor,
       'Durchschnitt' => self::$dwz_durchschnitt,
       'Leistung' => self::$leistung
     ];
   }
 
   /**
-   * static method getErg
+   * statische Methode getErg
    * 
-   * returns the result
+   * gibt das Ergebnis zurück
    * 
    * @return array {DWZ_alt: int, DWZ_neu: int, Erwartung: float, Koeffizient: int, Partien: int}
    */
@@ -398,9 +399,9 @@ class Dwz
   }
 
   /**
-   * static method showErg
+   * statische Methode showErg
    * 
-   * outputs the result in JSON e.g. for AJAX Query
+   * gibt das Ergebnis in JSON aus
    * 
    * @return void
    */
